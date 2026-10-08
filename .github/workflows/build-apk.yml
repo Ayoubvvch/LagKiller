@@ -33,36 +33,31 @@ jobs:
       - name: Prepare APK for Release
         run: |
           mkdir -p release-output
-          cp app/build/outputs/apk/debug/app-debug.apk release-output/LagKiller-v1.0.0.apk
+          cp app/build/outputs/apk/debug/app-debug.apk release-output/LagKiller-v1.1.0.apk
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: LagKiller-v1.0.0-APK
-          path: release-output/LagKiller-v1.0.0.apk
+          name: LagKiller-v1.1.0-APK
+          path: release-output/LagKiller-v1.1.0.apk
           if-no-files-found: error
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/heads/main')
         with:
-          tag_name: v1.0.0
-          name: "LagKiller Root v1.0.0 - Smart Lag Detector & App Freezer"
+          tag_name: v1.1.0
+          name: "LagKiller Root v1.1.0 - Ultra Fast & Smooth Edition"
           body: |
-            ### ⚡ LagKiller Root v1.0.0: Smart Lag Detector & App Freezer for Android
+            ### ⚡ LagKiller Root v1.1.0: Ultra-Fast & Smooth Edition
 
-            - **Root Engine & Process Manager:**
-              - Real-time CPU and RAM monitoring per app and process.
-              - Live detection of CPU hogs and background lag makers.
-              - Core System Apps Shield to prevent killing critical system services (SystemUI, Launcher, Keyboard).
-            - **App Control Actions:**
-              - ⚡ **Force Stop**: Instantly terminates active processes.
-              - ⏸️ **Suspend / Unsuspend**: Suspends the app completely (icons dimmed, cannot wake up or receive alarms).
-              - ❄️ **Freeze / Disable**: Disables the app via `pm disable-user --user 0` so it vanishes from background.
-              - 🚀 **One-Tap Quick Boost**: Force-stops all background resource hogs and clears kernel memory cache (`drop_caches`).
-            - **High-Performance UI:**
-              - AMOLED Void dark theme `#050811` with live CPU/RAM gauges and Arabic interface.
-              - Dynamic app icon streaming directly from Android PackageManager.
-          files: release-output/LagKiller-v1.0.0.apk
+            - **Performance & Smoothness Optimization:**
+              - Removed background auto-refresh loops completely (zero background battery/CPU consumption).
+              - Added dedicated manual Refresh button (تحديث الفحص).
+              - Instant 0ms optimistic UI action response on Force Stop, Suspend, and Freeze.
+              - In-memory application metadata caching for instantaneous search and filtering.
+              - Asynchronous background root process scanning on IO threads.
+              - One-Tap Quick Boost to force-stop background resource hogs and drop caches.
+          files: release-output/LagKiller-v1.1.0.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

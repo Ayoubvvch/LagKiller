@@ -98,16 +98,11 @@
       gap: 5px;
       font-size: 10px;
       font-weight: 700;
-      padding: 4px 8px;
+      padding: 3px 7px;
       border-radius: 20px;
       background: rgba(0, 255, 157, 0.12);
       color: var(--emerald);
       border: 1px solid rgba(0, 255, 157, 0.3);
-    }
-    .root-badge.denied {
-      background: rgba(255, 51, 102, 0.12);
-      color: var(--red);
-      border-color: rgba(255, 51, 102, 0.3);
     }
 
     .header-actions {
@@ -116,21 +111,23 @@
       gap: 8px;
     }
 
-    .btn-icon {
-      background: var(--surface-card);
-      border: 1px solid var(--border);
-      color: var(--text);
-      padding: 7px 12px;
+    /* Manual Refresh Button */
+    .btn-refresh {
+      background: rgba(0, 240, 255, 0.15);
+      border: 1px solid var(--cyan);
+      color: var(--cyan);
+      padding: 7px 14px;
       border-radius: 8px;
-      font-size: 12px;
-      font-weight: 600;
+      font-size: 12.5px;
+      font-weight: 700;
       cursor: pointer;
       display: inline-flex;
       align-items: center;
       gap: 6px;
       transition: all 0.2s ease;
     }
-    .btn-icon:active { transform: scale(0.96); background: var(--surface-hover); }
+    .btn-refresh:active { transform: scale(0.96); background: rgba(0, 240, 255, 0.25); }
+    .btn-refresh.loading { opacity: 0.7; pointer-events: none; }
 
     /* Main Scroll Area */
     main {
@@ -139,10 +136,11 @@
       padding: 14px 16px;
       display: flex;
       flex-direction: column;
-      gap: 14px;
+      gap: 12px;
+      -webkit-overflow-scrolling: touch;
     }
 
-    /* Metrics Grid */
+    /* Metrics Overview Card */
     .metrics-card {
       background: var(--surface);
       border: 1px solid var(--border-light);
@@ -176,7 +174,7 @@
     }
 
     .metric-value {
-      font-size: 18px;
+      font-size: 17px;
       font-weight: 800;
       color: var(--cyan);
       font-family: monospace;
@@ -192,33 +190,7 @@
     .metric-bar-fill {
       height: 100%;
       border-radius: 3px;
-      transition: width 0.4s ease;
-    }
-
-    /* Lag Alert Banner */
-    .lag-alert-banner {
-      background: linear-gradient(135deg, rgba(255, 51, 102, 0.2), rgba(255, 51, 102, 0.05));
-      border: 1px solid var(--red);
-      border-radius: var(--radius);
-      padding: 12px 14px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      box-shadow: 0 0 20px var(--red-glow);
-      animation: pulseAlert 2s infinite ease-in-out;
-    }
-    @keyframes pulseAlert {
-      0%, 100% { border-color: rgba(255, 51, 102, 0.8); }
-      50% { border-color: rgba(255, 51, 102, 0.3); }
-    }
-
-    .lag-alert-text {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 13px;
-      font-weight: 700;
-      color: #FFF;
+      transition: width 0.3s ease;
     }
 
     /* Quick Boost Button */
@@ -227,8 +199,8 @@
       color: #FFF;
       border: none;
       border-radius: var(--radius);
-      padding: 13px 18px;
-      font-size: 14px;
+      padding: 12px 18px;
+      font-size: 13.5px;
       font-weight: 800;
       cursor: pointer;
       display: flex;
@@ -259,7 +231,7 @@
       font-weight: 700;
       white-space: nowrap;
       cursor: pointer;
-      transition: all 0.2s ease;
+      transition: all 0.15s ease;
     }
     .tab-btn.active {
       background: rgba(0, 240, 255, 0.15);
@@ -303,15 +275,19 @@
       display: flex;
       flex-direction: column;
       gap: 10px;
-      transition: all 0.2s ease;
+      transition: opacity 0.2s ease, border-color 0.2s ease;
     }
     .app-card.lag-maker {
-      border-color: rgba(255, 51, 102, 0.5);
-      background: linear-gradient(180deg, rgba(255, 51, 102, 0.08) 0%, var(--surface) 100%);
+      border-color: rgba(255, 51, 102, 0.45);
+      background: linear-gradient(180deg, rgba(255, 51, 102, 0.07) 0%, var(--surface) 100%);
     }
     .app-card.frozen {
       opacity: 0.6;
       border-style: dashed;
+    }
+    .app-card.stopped {
+      opacity: 0.65;
+      border-color: rgba(255, 255, 255, 0.05);
     }
 
     .app-card-header {
@@ -321,8 +297,8 @@
     }
 
     .app-icon {
-      width: 44px;
-      height: 44px;
+      width: 42px;
+      height: 42px;
       border-radius: 10px;
       object-fit: cover;
       background: var(--surface-card);
@@ -340,7 +316,7 @@
       margin-bottom: 2px;
     }
     .app-name {
-      font-size: 14px;
+      font-size: 13.5px;
       font-weight: 700;
       color: #FFF;
       white-space: nowrap;
@@ -363,9 +339,9 @@
       flex-shrink: 0;
     }
     .badge {
-      font-size: 11px;
+      font-size: 10.5px;
       font-weight: 700;
-      padding: 3px 8px;
+      padding: 3px 7px;
       border-radius: 6px;
       font-family: monospace;
     }
@@ -410,6 +386,7 @@
     .btn-action:active { transform: scale(0.96); }
 
     .btn-stop { background: rgba(255, 51, 102, 0.15); color: #FF6688; border-color: rgba(255, 51, 102, 0.3); }
+    .btn-stop.done { background: rgba(0, 255, 157, 0.1); color: var(--emerald); border-color: transparent; pointer-events: none; }
     .btn-suspend { background: rgba(255, 170, 0, 0.15); color: var(--amber); border-color: rgba(255, 170, 0, 0.3); }
     .btn-resume { background: rgba(0, 255, 157, 0.15); color: var(--emerald); border-color: rgba(0, 255, 157, 0.3); }
     .btn-freeze { background: rgba(0, 240, 255, 0.12); color: var(--cyan); border-color: rgba(0, 240, 255, 0.3); }
@@ -436,11 +413,11 @@
       font-size: 13px;
       font-weight: 700;
       box-shadow: 0 8px 30px rgba(0,0,0,0.8);
-      animation: slideToast 0.3s ease;
+      animation: slideToast 0.25s ease;
       text-align: center;
     }
     @keyframes slideToast {
-      from { transform: translateY(20px); opacity: 0; }
+      from { transform: translateY(16px); opacity: 0; }
       to { transform: translateY(0); opacity: 1; }
     }
   </style>
@@ -454,13 +431,14 @@
       <div>
         <div class="brand-title">LagKiller Root</div>
         <div style="display:flex; gap:6px; margin-top:2px;">
-          <span class="root-badge" id="rootBadge">⚡ ROOT ACTIVE</span>
+          <span class="root-badge" id="rootBadge">⚡ ROOT نشط</span>
         </div>
       </div>
     </div>
     <div class="header-actions">
-      <button class="btn-icon" id="refreshBtn">
-        <span id="refreshSpinner">🔄</span> فحص
+      <!-- Manual Refresh Button (NO auto-polling) -->
+      <button class="btn-refresh" id="refreshBtn">
+        <span id="refreshIcon">🔄</span> <span>تحديث الفحص</span>
       </button>
     </div>
   </header>
@@ -486,7 +464,7 @@
         <!-- RAM Box -->
         <div class="metric-box">
           <div class="metric-label">
-            <span>الذاكرة العشوائية (RAM)</span>
+            <span>الذاكرة (RAM)</span>
             <span id="ramFreeVal">متاح 0 MB</span>
           </div>
           <div class="metric-value" id="ramVal">0%</div>
@@ -499,18 +477,7 @@
       <!-- Quick Boost Button -->
       <button class="btn-quick-boost" id="quickBoostBtn">
         <span>⚡ تسريع فوري للجهاز</span>
-        <span style="font-size: 11px; opacity: 0.85;">(إيقاف كل المستهلكين بالخلفية وتفريغ الكاش)</span>
-      </button>
-    </div>
-
-    <!-- Lag Alert Banner (shown when lag makers exist) -->
-    <div class="lag-alert-banner" id="lagBanner" style="display: none;">
-      <div class="lag-alert-text">
-        <span style="font-size: 18px;">⚠️</span>
-        <span id="lagBannerText">تم رصد تطبيقات تستهلك المعالج الآن!</span>
-      </div>
-      <button class="btn-icon" id="lagKillAllBtn" style="background: var(--red); color:#FFF; border:none; padding: 6px 10px;">
-        إيقاف المستهلكين
+        <span style="font-size: 11px; opacity: 0.85;">(إيقاف كل المستهلكين وتفريغ كاش النواة)</span>
       </button>
     </div>
 
@@ -519,20 +486,20 @@
       <button class="tab-btn active" data-tab="lag">🔥 مسببات البطء (<span id="countLag">0</span>)</button>
       <button class="tab-btn" data-tab="running">🏃 بالخلفية (<span id="countRunning">0</span>)</button>
       <button class="tab-btn" data-tab="frozen">❄️ المجمدة (<span id="countFrozen">0</span>)</button>
-      <button class="tab-btn" data-tab="system">🛡️ النظام (<span id="countSystem">0</span>)</button>
       <button class="tab-btn" data-tab="all">📋 الكل (<span id="countAll">0</span>)</button>
+      <button class="tab-btn" data-tab="system">🛡️ النظام (<span id="countSystem">0</span>)</button>
     </div>
 
     <!-- Search Input -->
     <div class="search-box">
       <span>🔍</span>
-      <input type="text" id="searchInput" placeholder="بحث باسم التطبيق أو الحزمة...">
+      <input type="text" id="searchInput" placeholder="بحث فوري عن أي تطبيق..." autocomplete="off">
     </div>
 
     <!-- Apps List Container -->
     <div class="apps-list" id="appsList">
-      <div style="text-align: center; color: var(--text-dim); padding: 30px;">
-        جاري فحص العمليات والذاكرة عبر الروت... ⏳
+      <div style="text-align: center; color: var(--text-dim); padding: 40px;">
+        جاري الفحص المباشر... ⏳
       </div>
     </div>
 
@@ -545,8 +512,7 @@
     let allApps = [];
     let currentTab = 'lag';
     let searchQuery = '';
-    let autoRefreshTimer = null;
-    let isBusy = false;
+    let isScanning = false;
 
     // Toast Helper
     function showToast(msg) {
@@ -555,64 +521,70 @@
       toast.className = 'toast';
       toast.textContent = msg;
       container.appendChild(toast);
-      setTimeout(() => { toast.remove(); }, 2800);
+      setTimeout(() => { toast.remove(); }, 2500);
     }
 
-    // Refresh Data from Native Bridge
-    function refreshData() {
-      if (isBusy) return;
-      isBusy = true;
-      const spin = document.getElementById('refreshSpinner');
-      if (spin) spin.style.display = 'inline-block';
+    // Trigger Manual Scan
+    function triggerScan() {
+      if (isScanning) return;
+      isScanning = true;
+      const btn = document.getElementById('refreshBtn');
+      const icon = document.getElementById('refreshIcon');
+      btn.classList.add('loading');
+      icon.textContent = '⏳';
 
-      try {
-        if (!window.LagKillerBridge) {
-          showToast('تنبيه: محرك الروت غير متصل');
-          isBusy = false;
-          return;
+      if (window.LagKillerBridge && window.LagKillerBridge.requestScanAsync) {
+        window.LagKillerBridge.requestScanAsync();
+      } else if (window.LagKillerBridge) {
+        try {
+          const raw = window.LagKillerBridge.getSystemStats();
+          window.onSystemStatsReceived(JSON.parse(raw));
+        } catch (e) {
+          isScanning = false;
+          btn.classList.remove('loading');
+          icon.textContent = '🔄';
         }
-
-        const raw = window.LagKillerBridge.getSystemStats();
-        const data = JSON.parse(raw);
-
-        // Update CPU UI
-        const cpuTotal = data.cpu.total;
-        document.getElementById('cpuVal').textContent = `${cpuTotal}%`;
-        document.getElementById('cpuSubtext').textContent = `sys: ${data.cpu.sys}%`;
-        const cpuBar = document.getElementById('cpuBar');
-        cpuBar.style.width = `${Math.min(100, cpuTotal)}%`;
-        cpuBar.style.background = cpuTotal > 40 ? 'var(--red)' : (cpuTotal > 15 ? 'var(--amber)' : 'var(--cyan)');
-
-        // Update RAM UI
-        const ramUsed = data.ram.usedMB;
-        const ramTotal = data.ram.totalMB;
-        const ramPercent = data.ram.percent;
-        document.getElementById('ramVal').textContent = `${ramPercent}% (${(ramUsed/1024).toFixed(1)} GB)`;
-        document.getElementById('ramFreeVal').textContent = `متاح ${data.ram.freeMB} MB`;
-        const ramBar = document.getElementById('ramBar');
-        ramBar.style.width = `${ramPercent}%`;
-        ramBar.style.background = ramPercent > 85 ? 'var(--red)' : (ramPercent > 70 ? 'var(--amber)' : 'var(--emerald)');
-
-        // Update Counts
-        allApps = data.apps || [];
-        updateCounts();
-
-        // Lag Banner
-        const lagBanner = document.getElementById('lagBanner');
-        if (data.lagMakersCount > 0) {
-          lagBanner.style.display = 'flex';
-          document.getElementById('lagBannerText').textContent = `تم رصد ${data.lagMakersCount} تطبيق يستهلك المعالج أو الذاكرة بشكل مفرط!`;
-        } else {
-          lagBanner.style.display = 'none';
-        }
-
-        renderApps();
-      } catch (e) {
-        console.error(e);
-      } finally {
-        isBusy = false;
+      } else {
+        isScanning = false;
+        btn.classList.remove('loading');
+        icon.textContent = '🔄';
+        showToast('جهازك يعمل في وضع المعاينة');
       }
     }
+
+    // Async Callback from Android
+    window.onSystemStatsReceived = function(data) {
+      isScanning = false;
+      const btn = document.getElementById('refreshBtn');
+      const icon = document.getElementById('refreshIcon');
+      btn.classList.remove('loading');
+      icon.textContent = '🔄';
+
+      if (!data) return;
+
+      // Update CPU UI
+      const cpuTotal = data.cpu.total;
+      document.getElementById('cpuVal').textContent = `${cpuTotal}%`;
+      document.getElementById('cpuSubtext').textContent = `sys: ${data.cpu.sys}%`;
+      const cpuBar = document.getElementById('cpuBar');
+      cpuBar.style.width = `${Math.min(100, cpuTotal)}%`;
+      cpuBar.style.background = cpuTotal > 40 ? 'var(--red)' : (cpuTotal > 15 ? 'var(--amber)' : 'var(--cyan)');
+
+      // Update RAM UI
+      const ramUsed = data.ram.usedMB;
+      const ramTotal = data.ram.totalMB;
+      const ramPercent = data.ram.percent;
+      document.getElementById('ramVal').textContent = `${ramPercent}% (${(ramUsed/1024).toFixed(1)} GB)`;
+      document.getElementById('ramFreeVal').textContent = `متاح ${data.ram.freeMB} MB`;
+      const ramBar = document.getElementById('ramBar');
+      ramBar.style.width = `${ramPercent}%`;
+      ramBar.style.background = ramPercent > 85 ? 'var(--red)' : (ramPercent > 70 ? 'var(--amber)' : 'var(--emerald)');
+
+      // Update Apps Data
+      allApps = data.apps || [];
+      updateCounts();
+      renderApps();
+    };
 
     function updateCounts() {
       const lagCount = allApps.filter(a => a.isLagMaker).length;
@@ -639,14 +611,13 @@
 
         if (!matchesTab) return false;
 
-        // Search Filter
+        // Instant In-memory Search Filter
         if (searchQuery) {
           const q = searchQuery.toLowerCase();
           return app.name.toLowerCase().includes(q) || app.pkg.toLowerCase().includes(q);
         }
         return true;
       }).sort((a, b) => {
-        // Sort highest CPU first, then RAM
         if (b.cpu !== a.cpu) return b.cpu - a.cpu;
         return b.ram - a.ram;
       });
@@ -658,8 +629,8 @@
 
       if (filtered.length === 0) {
         listEl.innerHTML = `
-          <div style="text-align: center; color: var(--text-dim); padding: 40px;">
-            ${currentTab === 'lag' ? '✨ رائع! لا توجد تطبيقات تسبب بطء في المعالج حالياً' : 'لا توجد نتائج مطابقة'}
+          <div style="text-align: center; color: var(--text-dim); padding: 40px; font-size: 13px;">
+            ${currentTab === 'lag' ? '✨ رائع! لا توجد تطبيقات تستهلك المعالج بشكل مفرط حالياً' : 'لا توجد نتائج مطابقة'}
           </div>
         `;
         return;
@@ -676,52 +647,40 @@
         else if (app.cpu >= 5) cpuBadgeClass = 'badge-cpu-warn';
 
         return `
-          <div class="app-card ${isLag ? 'lag-maker' : ''} ${isDisabled || isSuspended ? 'frozen' : ''}" data-pkg="${app.pkg}">
+          <div class="app-card ${isLag ? 'lag-maker' : ''} ${isDisabled || isSuspended ? 'frozen' : ''}" id="card_${escapeId(app.pkg)}">
             <div class="app-card-header">
-              <img class="app-icon" src="https://appassets.androidplatform.net/app-icon/${app.pkg}.png" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\\'http://www.w3.org/2000/svg\\' width=\\'40\\' height=\\'40\\'><rect width=\\'40\\' height=\\'40\\' rx=\\'8\\' fill=\\'%231A243D\\'/></svg>'" alt="">
+              <img class="app-icon" src="https://appassets.androidplatform.net/app-icon/${app.pkg}.png" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\\'http://www.w3.org/2000/svg\\' width=\\'40\\' height=\\'40\\'><rect width=\\'40\\' height=\\'40\\' rx=\\'8\\' fill=\\'%231A243D\\'/></svg>'" alt="" loading="lazy">
               <div class="app-info">
                 <div class="app-title-row">
                   <span class="app-name">${escapeHtml(app.name)}</span>
                   ${isProtected ? '<span class="tag-status tag-protected">محمي 🛡️</span>' : ''}
-                  ${app.isRunning ? '<span class="tag-status tag-running">يعمل</span>' : ''}
-                  ${isSuspended ? '<span class="tag-status tag-suspended">معلق ⏸️</span>' : ''}
-                  ${isDisabled ? '<span class="tag-status tag-frozen">مجمد ❄️</span>' : ''}
+                  <span class="tag-status tag-running" id="tag_run_${escapeId(app.pkg)}" style="display: ${app.isRunning ? 'inline-block' : 'none'};">يعمل</span>
+                  <span class="tag-status tag-suspended" id="tag_susp_${escapeId(app.pkg)}" style="display: ${isSuspended ? 'inline-block' : 'none'};">معلق ⏸️</span>
+                  <span class="tag-status tag-frozen" id="tag_froz_${escapeId(app.pkg)}" style="display: ${isDisabled ? 'inline-block' : 'none'};">مجمد ❄️</span>
                 </div>
                 <div class="app-pkg">${app.pkg}</div>
               </div>
               <div class="app-badges">
-                ${app.cpu > 0 ? `<span class="badge ${cpuBadgeClass}">${app.cpu}% CPU</span>` : ''}
-                ${app.ram > 0 ? `<span class="badge badge-ram">${app.ram} MB</span>` : ''}
+                <span class="badge ${cpuBadgeClass}" id="badge_cpu_${escapeId(app.pkg)}" style="display: ${app.cpu > 0 ? 'inline-block' : 'none'};">${app.cpu}% CPU</span>
+                ${app.ram > 0 ? `<span class="badge badge-ram" id="badge_ram_${escapeId(app.pkg)}">${app.ram} MB</span>` : ''}
               </div>
             </div>
 
             <div class="app-actions">
-              <!-- Force Stop Button -->
-              <button class="btn-action btn-stop" onclick="handleAction('stop', '${app.pkg}', '${escapeHtml(app.name)}', ${isProtected})">
+              <!-- Force Stop Button (Instant Optimistic UI) -->
+              <button class="btn-action btn-stop" id="btn_stop_${escapeId(app.pkg)}" onclick="handleAction('stop', '${app.pkg}', '${escapeHtml(app.name)}', ${isProtected})">
                 ⚡ إيقاف
               </button>
 
               <!-- Suspend / Resume Button -->
-              ${isSuspended ? `
-                <button class="btn-action btn-resume" onclick="handleAction('unsuspend', '${app.pkg}', '${escapeHtml(app.name)}', ${isProtected})">
-                  ▶️ استئناف
-                </button>
-              ` : `
-                <button class="btn-action btn-suspend" onclick="handleAction('suspend', '${app.pkg}', '${escapeHtml(app.name)}', ${isProtected})">
-                  ⏸️ تعليق
-                </button>
-              `}
+              <button class="btn-action ${isSuspended ? 'btn-resume' : 'btn-suspend'}" id="btn_susp_${escapeId(app.pkg)}" onclick="handleAction('${isSuspended ? 'unsuspend' : 'suspend'}', '${app.pkg}', '${escapeHtml(app.name)}', ${isProtected})">
+                ${isSuspended ? '▶️ استئناف' : '⏸️ تعليق'}
+              </button>
 
               <!-- Freeze / Unfreeze Button -->
-              ${isDisabled ? `
-                <button class="btn-action btn-unfreeze" onclick="handleAction('unfreeze', '${app.pkg}', '${escapeHtml(app.name)}', ${isProtected})">
-                  🔥 إلغاء التجميد
-                </button>
-              ` : `
-                <button class="btn-action btn-freeze" onclick="handleAction('freeze', '${app.pkg}', '${escapeHtml(app.name)}', ${isProtected})">
-                  ❄️ تجميد
-                </button>
-              `}
+              <button class="btn-action ${isDisabled ? 'btn-unfreeze' : 'btn-freeze'}" id="btn_froz_${escapeId(app.pkg)}" onclick="handleAction('${isDisabled ? 'unfreeze' : 'freeze'}', '${app.pkg}', '${escapeHtml(app.name)}', ${isProtected})">
+                ${isDisabled ? '🔥 إلغاء التجميد' : '❄️ تجميد'}
+              </button>
             </div>
           </div>
         `;
@@ -732,57 +691,111 @@
       return (str || '').replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[m]);
     }
 
-    // App Control Actions
+    function escapeId(pkg) {
+      return (pkg || '').replace(/[^a-zA-Z0-9_]/g, '_');
+    }
+
+    // Instant Optimistic Action Handling (0ms UI latency!)
     window.handleAction = function(type, pkg, name, isProtected) {
       if (isProtected) {
-        alert(`تحذير: "${name}" هو تطبيق نظام أساسي محمي. لا ينصح بإيقافه لتجنب إعادة تشغيل واجهة النظام!`);
+        alert(`تحذير: "${name}" هو تطبيق نظام أساسي محمي. لا ينصح بإيقافه!`);
         return;
       }
 
       if (!window.LagKillerBridge) return;
 
-      let resJson;
+      const cardId = escapeId(pkg);
+      const cardEl = document.getElementById(`card_${cardId}`);
+      const btnStop = document.getElementById(`btn_stop_${cardId}`);
+      const btnSusp = document.getElementById(`btn_susp_${cardId}`);
+      const btnFroz = document.getElementById(`btn_froz_${cardId}`);
+      const tagRun = document.getElementById(`tag_run_${cardId}`);
+      const tagSusp = document.getElementById(`tag_susp_${cardId}`);
+      const tagFroz = document.getElementById(`tag_froz_${cardId}`);
+      const badgeCpu = document.getElementById(`badge_cpu_${cardId}`);
+
+      // 1. Optimistic Immediate UI Feedback in 0ms:
       if (type === 'stop') {
-        resJson = window.LagKillerBridge.forceStop(pkg);
-        showToast(`تم إيقاف ${name} ⚡`);
+        window.LagKillerBridge.forceStop(pkg);
+        if (btnStop) {
+          btnStop.innerHTML = '✓ متوقف';
+          btnStop.classList.add('done');
+        }
+        if (tagRun) tagRun.style.display = 'none';
+        if (badgeCpu) badgeCpu.style.display = 'none';
+        if (cardEl) cardEl.classList.add('stopped');
+        showToast(`تم إيقاف ${name} فورا ⚡`);
       } else if (type === 'suspend') {
-        resJson = window.LagKillerBridge.suspendApp(pkg);
+        window.LagKillerBridge.suspendApp(pkg);
+        if (btnSusp) {
+          btnSusp.className = 'btn-action btn-resume';
+          btnSusp.innerHTML = '▶️ استئناف';
+          btnSusp.setAttribute('onclick', `handleAction('unsuspend', '${pkg}', '${escapeHtml(name)}', false)`);
+        }
+        if (tagSusp) tagSusp.style.display = 'inline-block';
+        if (tagRun) tagRun.style.display = 'none';
+        if (badgeCpu) badgeCpu.style.display = 'none';
+        if (cardEl) cardEl.classList.add('frozen');
         showToast(`تم تعليق ${name} (Suspend) ⏸️`);
       } else if (type === 'unsuspend') {
-        resJson = window.LagKillerBridge.unsuspendApp(pkg);
+        window.LagKillerBridge.unsuspendApp(pkg);
+        if (btnSusp) {
+          btnSusp.className = 'btn-action btn-suspend';
+          btnSusp.innerHTML = '⏸️ تعليق';
+          btnSusp.setAttribute('onclick', `handleAction('suspend', '${pkg}', '${escapeHtml(name)}', false)`);
+        }
+        if (tagSusp) tagSusp.style.display = 'none';
+        if (cardEl) cardEl.classList.remove('frozen');
         showToast(`تم استئناف ${name} ▶️`);
       } else if (type === 'freeze') {
-        resJson = window.LagKillerBridge.freezeApp(pkg);
+        window.LagKillerBridge.freezeApp(pkg);
+        if (btnFroz) {
+          btnFroz.className = 'btn-action btn-unfreeze';
+          btnFroz.innerHTML = '🔥 إلغاء التجميد';
+          btnFroz.setAttribute('onclick', `handleAction('unfreeze', '${pkg}', '${escapeHtml(name)}', false)`);
+        }
+        if (tagFroz) tagFroz.style.display = 'inline-block';
+        if (tagRun) tagRun.style.display = 'none';
+        if (badgeCpu) badgeCpu.style.display = 'none';
+        if (cardEl) cardEl.classList.add('frozen');
         showToast(`تم تجميد ${name} (Disable) ❄️`);
       } else if (type === 'unfreeze') {
-        resJson = window.LagKillerBridge.unfreezeApp(pkg);
-        showToast(`تم إلغاء تجميد ${name} 🔥`);
+        window.LagKillerBridge.unfreezeApp(pkg);
+        if (btnFroz) {
+          btnFroz.className = 'btn-action btn-freeze';
+          btnFroz.innerHTML = '❄️ تجميد';
+          btnFroz.setAttribute('onclick', `handleAction('freeze', '${pkg}', '${escapeHtml(name)}', false)`);
+        }
+        if (tagFroz) tagFroz.style.display = 'none';
+        if (cardEl) cardEl.classList.remove('frozen');
+        showToast(`تم فك تجميد ${name} 🔥`);
       }
 
-      setTimeout(refreshData, 300);
+      // Update in-memory state
+      const appRef = allApps.find(a => a.pkg === pkg);
+      if (appRef) {
+        if (type === 'stop') { appRef.isRunning = false; appRef.cpu = 0; }
+        else if (type === 'suspend') { appRef.isSuspended = true; appRef.isRunning = false; }
+        else if (type === 'unsuspend') { appRef.isSuspended = false; }
+        else if (type === 'freeze') { appRef.isDisabled = true; appRef.isRunning = false; }
+        else if (type === 'unfreeze') { appRef.isDisabled = false; }
+        updateCounts();
+      }
     };
 
-    // Quick Boost Button Action
+    // Quick Boost Button
     document.getElementById('quickBoostBtn').addEventListener('click', () => {
       if (!window.LagKillerBridge) return;
-      const res = window.LagKillerBridge.quickBoost();
-      const parsed = JSON.parse(res);
-      showToast(parsed.message || 'تم تنظيف الخلفية بنجاح ⚡');
-      setTimeout(refreshData, 500);
+      showToast('جاري تسريع الهاتف وتنظيف الذاكرة... ⚡');
+      setTimeout(() => {
+        const res = window.LagKillerBridge.quickBoost();
+        const parsed = JSON.parse(res);
+        showToast(parsed.message || 'تم تنظيف الخلفية بنجاح ⚡');
+        triggerScan();
+      }, 100);
     });
 
-    // Lag Kill All Action
-    document.getElementById('lagKillAllBtn').addEventListener('click', () => {
-      if (!window.LagKillerBridge) return;
-      const lagApps = allApps.filter(a => a.isLagMaker && !a.isProtected);
-      for (const app of lagApps) {
-        window.LagKillerBridge.forceStop(app.pkg);
-      }
-      showToast(`تم إيقاف ${lagApps.length} تطبيق مسبب للبطء فورا! ⚡`);
-      setTimeout(refreshData, 500);
-    });
-
-    // Tab buttons event listeners
+    // Tab buttons
     document.querySelectorAll('.tab-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -792,19 +805,18 @@
       });
     });
 
-    // Search Input event listener
+    // Instant Search Input
     document.getElementById('searchInput').addEventListener('input', (e) => {
       searchQuery = e.target.value.trim();
       renderApps();
     });
 
-    // Refresh Button
-    document.getElementById('refreshBtn').addEventListener('click', refreshData);
+    // Manual Refresh Button Listener
+    document.getElementById('refreshBtn').addEventListener('click', triggerScan);
 
-    // Initial Load & Auto refresh
+    // Initial Load ONCE (No interval timers!)
     window.addEventListener('load', () => {
-      refreshData();
-      autoRefreshTimer = setInterval(refreshData, 3500);
+      triggerScan();
     });
   </script>
 </body>

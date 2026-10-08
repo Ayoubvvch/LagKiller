@@ -31,8 +31,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var controller: AppActionController
     private var lastBackPressTime = 0L
 
-    // In-memory icon cache
-    private val iconCache = object : LruCache<String, ByteArray>(100) {}
+    private val iconCache = object : LruCache<String, ByteArray>(120) {}
 
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -72,7 +71,7 @@ class MainActivity : AppCompatActivity() {
         setContentView(webView)
 
         // Add Bridge
-        webView.addJavascriptInterface(LagKillerBridge(this, monitor, controller), "LagKillerBridge")
+        webView.addJavascriptInterface(LagKillerBridge(this, webView, monitor, controller), "LagKillerBridge")
 
         // Asset Loader
         val assetLoader = WebViewAssetLoader.Builder()
@@ -147,14 +146,10 @@ class MainActivity : AppCompatActivity() {
             }
         })
 
-        // Check root on startup in background
+        // Warm up cache and root check on startup in background
         CoroutineScope(Dispatchers.IO).launch {
-            val rootOk = RootShell.isRootAvailable()
-            withContext(Dispatchers.Main) {
-                if (!rootOk) {
-                    Toast.makeText(this@MainActivity, "تنبيه: يتطلب التطبيق صلاحيات الروت ليعمل بكامل ميزاته!", Toast.LENGTH_LONG).show()
-                }
-            }
+            monitor.ensureAppCache()
+            RootShell.isRootAvailable()
         }
 
         webView.loadUrl("https://appassets.androidplatform.net/assets/web/index.html")
@@ -167,7 +162,7 @@ class MainActivity : AppCompatActivity() {
             val drawable = packageManager.getApplicationIcon(packageName)
             val bitmap = drawableToBitmap(drawable)
             val stream = ByteArrayOutputStream()
-            bitmap.compress(Bitmap.CompressFormat.PNG, 90, stream)
+            bitmap.compress(Bitmap.CompressFormat.PNG, 85, stream)
             val bytes = stream.toByteArray()
             iconCache.put(packageName, bytes)
             bytes
@@ -180,8 +175,8 @@ class MainActivity : AppCompatActivity() {
         if (drawable is BitmapDrawable && drawable.bitmap != null) {
             return drawable.bitmap
         }
-        val width = if (drawable.intrinsicWidth > 0) drawable.intrinsicWidth else 96
-        val height = if (drawable.intrinsicHeight > 0) drawable.intrinsicHeight else 96
+        val width = if (drawable.intrinsicWidth > 0) drawable.intrinsicWidth else 84
+        val height = if (drawable.intrinsicHeight > 0) drawable.intrinsicHeight else 84
         val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(bitmap)
         drawable.setBounds(0, 0, canvas.width, canvas.height)
@@ -206,9 +201,20 @@ class MainActivity : AppCompatActivity() {
 
     class LagKillerBridge(
         private val activity: MainActivity,
+        private val webView: WebView,
         private val monitor: SystemMonitor,
         private val controller: AppActionController
     ) {
+
+        @JavascriptInterface
+        fun requestScanAsync() {
+            CoroutineScope(Dispatchers.IO).launch {
+                val statsJson = monitor.getSystemStats()
+                withContext(Dispatchers.Main) {
+                    webView.evaluateJavascript("window.onSystemStatsReceived($statsJson);", null)
+                }
+            }
+        }
 
         @JavascriptInterface
         fun getSystemStats(): String {
@@ -217,27 +223,42 @@ class MainActivity : AppCompatActivity() {
 
         @JavascriptInterface
         fun forceStop(pkg: String): String {
-            return controller.forceStop(pkg)
+            CoroutineScope(Dispatchers.IO).launch {
+                controller.forceStop(pkg)
+            }
+            return "{\"success\":true}"
         }
 
         @JavascriptInterface
         fun suspendApp(pkg: String): String {
-            return controller.suspendApp(pkg)
+            CoroutineScope(Dispatchers.IO).launch {
+                controller.suspendApp(pkg)
+            }
+            return "{\"success\":true}"
         }
 
         @JavascriptInterface
         fun unsuspendApp(pkg: String): String {
-            return controller.unsuspendApp(pkg)
+            CoroutineScope(Dispatchers.IO).launch {
+                controller.unsuspendApp(pkg)
+            }
+            return "{\"success\":true}"
         }
 
         @JavascriptInterface
         fun freezeApp(pkg: String): String {
-            return controller.freezeApp(pkg)
+            CoroutineScope(Dispatchers.IO).launch {
+                controller.freezeApp(pkg)
+            }
+            return "{\"success\":true}"
         }
 
         @JavascriptInterface
         fun unfreezeApp(pkg: String): String {
-            return controller.unfreezeApp(pkg)
+            CoroutineScope(Dispatchers.IO).launch {
+                controller.unfreezeApp(pkg)
+            }
+            return "{\"success\":true}"
         }
 
         @JavascriptInterface

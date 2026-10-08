@@ -31,9 +31,18 @@ class SystemMonitor(private val context: Context) {
         "com.acmods.lagkiller"
     )
 
+    data class CachedAppMeta(
+        val pkg: String,
+        val name: String,
+        val isSystem: Boolean,
+        val isProtected: Boolean
+    )
+
+    private val cachedApps = mutableListOf<CachedAppMeta>()
+    private var isAppListCached = false
+
     init {
         try {
-            // Protect current default input method (keyboard)
             val defaultIme = Settings.Secure.getString(context.contentResolver, Settings.Secure.DEFAULT_INPUT_METHOD)
             if (!defaultIme.isNullOrEmpty()) {
                 val imePkg = defaultIme.substringBefore("/")
@@ -41,6 +50,30 @@ class SystemMonitor(private val context: Context) {
             }
         } catch (e: Exception) {
             // Ignore
+        }
+        ensureAppCache()
+    }
+
+    @Synchronized
+    fun ensureAppCache() {
+        if (isAppListCached && cachedApps.isNotEmpty()) return
+        try {
+            val installed = packageManager.getInstalledApplications(0)
+            cachedApps.clear()
+            for (appInfo in installed) {
+                val pkg = appInfo.packageName
+                val isSystem = (appInfo.flags and ApplicationInfo.FLAG_SYSTEM) != 0
+                val isProtected = CORE_PROTECTED_PACKAGES.contains(pkg)
+                val label = try {
+                    appInfo.loadLabel(packageManager).toString()
+                } catch (e: Exception) {
+                    pkg
+                }
+                cachedApps.add(CachedAppMeta(pkg, label, isSystem, isProtected))
+            }
+            isAppListCached = true
+        } catch (e: Exception) {
+            // Fallback
         }
     }
 
@@ -53,10 +86,9 @@ class SystemMonitor(private val context: Context) {
     fun getSystemStats(): String {
         val root = JSONObject()
 
-        // 1. RAM Info from /proc/meminfo
+        // 1. RAM Info directly from /proc/meminfo (instant ~1ms)
         var totalRamKB = 0L
         var availRamKB = 0L
-        var freeRamKB = 0L
         try {
             val memInfoLines = File("/proc/meminfo").readLines()
             for (line in memInfoLines) {
@@ -64,11 +96,8 @@ class SystemMonitor(private val context: Context) {
                 if (parts.size >= 2) {
                     val key = parts[0].trim()
                     val valKB = parts[1].trim().split("\\s+".toRegex())[0].toLongOrNull() ?: 0L
-                    when (key) {
-                        "MemTotal" -> totalRamKB = valKB
-                        "MemAvailable" -> availRamKB = valKB
-                        "MemFree" -> freeRamKB = valKB
-                    }
+                    if (key == "MemTotal") totalRamKB = valKB
+                    else if (key == "MemAvailable") availRamKB = valKB
                 }
             }
         } catch (e: Exception) {
@@ -88,19 +117,16 @@ class SystemMonitor(private val context: Context) {
         }
         root.put("ram", ramObj)
 
-        // 2. CPU and Process Parsing via Root
+        // 2. CPU and Process Parsing via single fast Root command
         val runningAppsMap = mutableMapOf<String, AppProcData>()
         var totalCpuUsed = 0.0
         var totalCpuUser = 0.0
         var totalCpuSys = 0.0
 
-        // Parse top output
-        val topOutput = RootShell.exec("top -b -n 1 -m 40")
-        val topLines = topOutput.lines()
-        for (line in topLines) {
+        val topOutput = RootShell.exec("top -b -n 1 -m 35")
+        for (line in topOutput.lines()) {
             val trimmed = line.trim()
             if (trimmed.contains("%cpu", ignoreCase = true)) {
-                // e.g. 800%cpu 69%user 21%nice 83%sys 621%idle
                 val parts = trimmed.split("\\s+".toRegex())
                 for (p in parts) {
                     if (p.endsWith("%user")) totalCpuUser = p.removeSuffix("%user").toDoubleOrNull() ?: 0.0
@@ -108,7 +134,6 @@ class SystemMonitor(private val context: Context) {
                 }
                 totalCpuUsed = totalCpuUser + totalCpuSys
             } else if (trimmed.matches("^\\d+.*".toRegex())) {
-                // Process line: PID USER PR NI VIRT RES SHR S[%CPU] %MEM TIME+ ARGS
                 val parts = trimmed.split("\\s+".toRegex())
                 if (parts.size >= 10) {
                     val cpuIdx = if (parts.size > 11) 8 else 6
@@ -124,10 +149,9 @@ class SystemMonitor(private val context: Context) {
             }
         }
 
-        // Parse ps output for accurate RSS RAM of all user processes
+        // Fast ps scan for accurate RAM calculation
         val psOutput = RootShell.exec("ps -A -o RSS,NAME")
-        val psLines = psOutput.lines()
-        for (line in psLines) {
+        for (line in psOutput.lines()) {
             val trimmed = line.trim()
             val parts = trimmed.split("\\s+".toRegex())
             if (parts.size >= 2) {
@@ -150,27 +174,18 @@ class SystemMonitor(private val context: Context) {
         }
         root.put("cpu", cpuObj)
 
-        // 3. Match with PackageManager installed apps
-        val installedApps = packageManager.getInstalledApplications(PackageManager.GET_META_DATA)
+        // 3. Match with cached installed apps (Instant memory lookup)
+        ensureAppCache()
         val appsArray = JSONArray()
 
         var lagMakersCount = 0
         var runningCount = 0
         var frozenCount = 0
 
-        for (appInfo in installedApps) {
-            val pkg = appInfo.packageName
-            val isSystem = (appInfo.flags and ApplicationInfo.FLAG_SYSTEM) != 0
-            val isProtected = CORE_PROTECTED_PACKAGES.contains(pkg)
-
-            val isDisabled = !appInfo.enabled
-            val isSuspended = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                try { packageManager.isPackageSuspended(pkg) } catch (e: Exception) { false }
-            } else false
-
-            if (isDisabled || isSuspended) {
-                frozenCount++
-            }
+        for (meta in cachedApps) {
+            val pkg = meta.pkg
+            val isProtected = meta.isProtected
+            val isSystem = meta.isSystem
 
             val procData = runningAppsMap[pkg]
             val isRunning = procData != null && procData.procCount > 0
@@ -180,18 +195,31 @@ class SystemMonitor(private val context: Context) {
             val ramMB = if (procData != null) (procData.ramKB / 1024).toInt() else 0
             val procs = procData?.procCount ?: 0
 
-            val isLagMaker = isRunning && !isProtected && (cpu >= 10.0 || ramMB >= 450)
+            val isLagMaker = isRunning && !isProtected && (cpu >= 8.0 || ramMB >= 400)
             if (isLagMaker) lagMakersCount++
 
-            val appLabel = try {
-                appInfo.loadLabel(packageManager).toString()
-            } catch (e: Exception) {
-                pkg
+            // Fast state check (only when needed)
+            var isDisabled = false
+            var isSuspended = false
+            if (!isRunning) {
+                try {
+                    val appInfo = packageManager.getApplicationInfo(pkg, 0)
+                    isDisabled = !appInfo.enabled
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                        isSuspended = packageManager.isPackageSuspended(pkg)
+                    }
+                } catch (e: Exception) {
+                    // Ignore
+                }
+            }
+
+            if (isDisabled || isSuspended) {
+                frozenCount++
             }
 
             val appObj = JSONObject().apply {
                 put("pkg", pkg)
-                put("name", appLabel)
+                put("name", meta.name)
                 put("cpu", String.format("%.1f", cpu).toDouble())
                 put("ram", ramMB)
                 put("procs", procs)
