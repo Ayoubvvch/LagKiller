@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>LagKiller Root | كاشف ومزيل البطء الذكي</title>
+  <style>
+    :root {
+      --bg: #050811;
+      --surface: #0a1122;
+      --surface-card: #0f1a35;
+      --surface-hover: #16254a;
+      --border: rgba(255, 255, 255, 0.08);
+      --border-light: rgba(255, 255, 255, 0.14);
+      --cyan: #00F0FF;
+      --cyan-glow: rgba(0, 240, 255, 0.25);
+      --red: #FF3366;
+      --red-glow: rgba(255, 51, 102, 0.35);
+      --emerald: #00FF9D;
+      --emerald-glow: rgba(0, 255, 157, 0.25);
+      --amber: #FFAA00;
+      --text: #F8FAFC;
+      --text-muted: #94A3B8;
+      --text-dim: #64748B;
+      --radius: 12px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Cairo", "Segoe UI", Roboto, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+      padding-top: env(safe-area-inset-top, 0);
+      padding-bottom: env(safe-area-inset-bottom, 0);
+    }
+
+    /* Scrollbars */
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.15); border-radius: 4px; }
+
+    /* Header */
+    header {
+      background: rgba(10, 17, 34, 0.95);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+      z-index: 30;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .brand-icon {
+      width: 34px;
+      height: 34px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #00F0FF, #0066FF);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 16px var(--cyan-glow);
+      color: #000;
+      font-weight: 900;
+    }
+
+    .brand-title {
+      font-size: 16px;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      background: linear-gradient(135deg, #FFF 30%, var(--cyan) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .root-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 4px 8px;
+      border-radius: 20px;
+      background: rgba(0, 255, 157, 0.12);
+      color: var(--emerald);
+      border: 1px solid rgba(0, 255, 157, 0.3);
+    }
+    .root-badge.denied {
+      background: rgba(255, 51, 102, 0.12);
+      color: var(--red);
+      border-color: rgba(255, 51, 102, 0.3);
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-icon {
+      background: var(--surface-card);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 7px 12px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+    }
+    .btn-icon:active { transform: scale(0.96); background: var(--surface-hover); }
+
+    /* Main Scroll Area */
+    main {
+      flex: 1;
+      overflow-y: auto;
+      padding: 14px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    /* Metrics Grid */
+    .metrics-card {
+      background: var(--surface);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    }
+
+    .metrics-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .metric-box {
+      background: var(--surface-card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 12px;
+    }
+
+    .metric-label {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .metric-value {
+      font-size: 18px;
+      font-weight: 800;
+      color: var(--cyan);
+      font-family: monospace;
+    }
+
+    .metric-bar-bg {
+      height: 6px;
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 3px;
+      overflow: hidden;
+      margin-top: 6px;
+    }
+    .metric-bar-fill {
+      height: 100%;
+      border-radius: 3px;
+      transition: width 0.4s ease;
+    }
+
+    /* Lag Alert Banner */
+    .lag-alert-banner {
+      background: linear-gradient(135deg, rgba(255, 51, 102, 0.2), rgba(255, 51, 102, 0.05));
+      border: 1px solid var(--red);
+      border-radius: var(--radius);
+      padding: 12px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 0 20px var(--red-glow);
+      animation: pulseAlert 2s infinite ease-in-out;
+    }
+    @keyframes pulseAlert {
+      0%, 100% { border-color: rgba(255, 51, 102, 0.8); }
+      50% { border-color: rgba(255, 51, 102, 0.3); }
+    }
+
+    .lag-alert-text {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      font-weight: 700;
+      color: #FFF;
+    }
+
+    /* Quick Boost Button */
+    .btn-quick-boost {
+      background: linear-gradient(135deg, #FF3366 0%, #FF0055 100%);
+      color: #FFF;
+      border: none;
+      border-radius: var(--radius);
+      padding: 13px 18px;
+      font-size: 14px;
+      font-weight: 800;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      box-shadow: 0 4px 20px var(--red-glow);
+      transition: all 0.2s ease;
+      width: 100%;
+    }
+    .btn-quick-boost:active { transform: scale(0.98); filter: brightness(1.2); }
+
+    /* Tabs Bar */
+    .tabs-wrapper {
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      padding-bottom: 2px;
+      flex-shrink: 0;
+    }
+    .tab-btn {
+      background: var(--surface-card);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      padding: 8px 14px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 700;
+      white-space: nowrap;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .tab-btn.active {
+      background: rgba(0, 240, 255, 0.15);
+      border-color: var(--cyan);
+      color: var(--cyan);
+    }
+
+    /* Search Box */
+    .search-box {
+      background: var(--surface-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .search-box input {
+      background: transparent;
+      border: none;
+      outline: none;
+      color: #FFF;
+      font-size: 13px;
+      width: 100%;
+    }
+    .search-box input::placeholder { color: var(--text-dim); }
+
+    /* App Cards List */
+    .apps-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      padding-bottom: 40px;
+    }
+
+    .app-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 12px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      transition: all 0.2s ease;
+    }
+    .app-card.lag-maker {
+      border-color: rgba(255, 51, 102, 0.5);
+      background: linear-gradient(180deg, rgba(255, 51, 102, 0.08) 0%, var(--surface) 100%);
+    }
+    .app-card.frozen {
+      opacity: 0.6;
+      border-style: dashed;
+    }
+
+    .app-card-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .app-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 10px;
+      object-fit: cover;
+      background: var(--surface-card);
+      flex-shrink: 0;
+    }
+
+    .app-info {
+      flex: 1;
+      min-width: 0;
+    }
+    .app-title-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 2px;
+    }
+    .app-name {
+      font-size: 14px;
+      font-weight: 700;
+      color: #FFF;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .app-pkg {
+      font-size: 11px;
+      color: var(--text-dim);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      font-family: monospace;
+    }
+
+    .app-badges {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+    .badge {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-family: monospace;
+    }
+    .badge-cpu-danger { background: rgba(255, 51, 102, 0.2); color: var(--red); border: 1px solid var(--red); }
+    .badge-cpu-warn { background: rgba(255, 170, 0, 0.2); color: var(--amber); }
+    .badge-cpu-normal { background: rgba(0, 240, 255, 0.1); color: var(--cyan); }
+    .badge-ram { background: rgba(255, 255, 255, 0.06); color: var(--text-muted); }
+
+    .tag-status {
+      font-size: 10px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-weight: 600;
+    }
+    .tag-running { background: rgba(0, 255, 157, 0.15); color: var(--emerald); }
+    .tag-frozen { background: rgba(0, 240, 255, 0.15); color: var(--cyan); }
+    .tag-suspended { background: rgba(255, 170, 0, 0.15); color: var(--amber); }
+    .tag-protected { background: rgba(148, 163, 184, 0.15); color: var(--text-muted); }
+
+    /* Action Buttons Row */
+    .app-actions {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      border-top: 1px solid var(--border);
+      padding-top: 8px;
+    }
+    .btn-action {
+      flex: 1;
+      padding: 7px 4px;
+      font-size: 11.5px;
+      font-weight: 700;
+      border-radius: 6px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      transition: all 0.15s ease;
+      border: 1px solid transparent;
+    }
+    .btn-action:active { transform: scale(0.96); }
+
+    .btn-stop { background: rgba(255, 51, 102, 0.15); color: #FF6688; border-color: rgba(255, 51, 102, 0.3); }
+    .btn-suspend { background: rgba(255, 170, 0, 0.15); color: var(--amber); border-color: rgba(255, 170, 0, 0.3); }
+    .btn-resume { background: rgba(0, 255, 157, 0.15); color: var(--emerald); border-color: rgba(0, 255, 157, 0.3); }
+    .btn-freeze { background: rgba(0, 240, 255, 0.12); color: var(--cyan); border-color: rgba(0, 240, 255, 0.3); }
+    .btn-unfreeze { background: rgba(0, 255, 157, 0.15); color: var(--emerald); border-color: rgba(0, 255, 157, 0.3); }
+
+    /* Toast Notification */
+    .toast-container {
+      position: fixed;
+      bottom: 24px;
+      left: 20px;
+      right: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      pointer-events: none;
+      z-index: 100;
+    }
+    .toast {
+      background: rgba(15, 26, 53, 0.95);
+      border: 1px solid var(--cyan);
+      color: #FFF;
+      padding: 10px 16px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 700;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.8);
+      animation: slideToast 0.3s ease;
+      text-align: center;
+    }
+    @keyframes slideToast {
+      from { transform: translateY(20px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Header -->
+  <header>
+    <div class="brand">
+      <div class="brand-icon">⚡</div>
+      <div>
+        <div class="brand-title">LagKiller Root</div>
+        <div style="display:flex; gap:6px; margin-top:2px;">
+          <span class="root-badge" id="rootBadge">⚡ ROOT ACTIVE</span>
+        </div>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button class="btn-icon" id="refreshBtn">
+        <span id="refreshSpinner">🔄</span> فحص
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Scrollable Area -->
+  <main>
+
+    <!-- Metrics Overview Card -->
+    <div class="metrics-card">
+      <div class="metrics-row">
+        <!-- CPU Box -->
+        <div class="metric-box">
+          <div class="metric-label">
+            <span>استهلاك المعالج</span>
+            <span id="cpuSubtext">sys: 0%</span>
+          </div>
+          <div class="metric-value" id="cpuVal">0.0%</div>
+          <div class="metric-bar-bg">
+            <div class="metric-bar-fill" id="cpuBar" style="width: 0%; background: var(--cyan);"></div>
+          </div>
+        </div>
+
+        <!-- RAM Box -->
+        <div class="metric-box">
+          <div class="metric-label">
+            <span>الذاكرة العشوائية (RAM)</span>
+            <span id="ramFreeVal">متاح 0 MB</span>
+          </div>
+          <div class="metric-value" id="ramVal">0%</div>
+          <div class="metric-bar-bg">
+            <div class="metric-bar-fill" id="ramBar" style="width: 0%; background: var(--emerald);"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Boost Button -->
+      <button class="btn-quick-boost" id="quickBoostBtn">
+        <span>⚡ تسريع فوري للجهاز</span>
+        <span style="font-size: 11px; opacity: 0.85;">(إيقاف كل المستهلكين بالخلفية وتفريغ الكاش)</span>
+      </button>
+    </div>
+
+    <!-- Lag Alert Banner (shown when lag makers exist) -->
+    <div class="lag-alert-banner" id="lagBanner" style="display: none;">
+      <div class="lag-alert-text">
+        <span style="font-size: 18px;">⚠️</span>
+        <span id="lagBannerText">تم رصد تطبيقات تستهلك المعالج الآن!</span>
+      </div>
+      <button class="btn-icon" id="lagKillAllBtn" style="background: var(--red); color:#FFF; border:none; padding: 6px 10px;">
+        إيقاف المستهلكين
+      </button>
+    </div>
+
+    <!-- Filter Tabs -->
+    <div class="tabs-wrapper">
+      <button class="tab-btn active" data-tab="lag">🔥 مسببات البطء (<span id="countLag">0</span>)</button>
+      <button class="tab-btn" data-tab="running">🏃 بالخلفية (<span id="countRunning">0</span>)</button>
+      <button class="tab-btn" data-tab="frozen">❄️ المجمدة (<span id="countFrozen">0</span>)</button>
+      <button class="tab-btn" data-tab="system">🛡️ النظام (<span id="countSystem">0</span>)</button>
+      <button class="tab-btn" data-tab="all">📋 الكل (<span id="countAll">0</span>)</button>
+    </div>
+
+    <!-- Search Input -->
+    <div class="search-box">
+      <span>🔍</span>
+      <input type="text" id="searchInput" placeholder="بحث باسم التطبيق أو الحزمة...">
+    </div>
+
+    <!-- Apps List Container -->
+    <div class="apps-list" id="appsList">
+      <div style="text-align: center; color: var(--text-dim); padding: 30px;">
+        جاري فحص العمليات والذاكرة عبر الروت... ⏳
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Toast Notification Container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <script>
+    let allApps = [];
+    let currentTab = 'lag';
+    let searchQuery = '';
+    let autoRefreshTimer = null;
+    let isBusy = false;
+
+    // Toast Helper
+    function showToast(msg) {
+      const container = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+      toast.className = 'toast';
+      toast.textContent = msg;
+      container.appendChild(toast);
+      setTimeout(() => { toast.remove(); }, 2800);
+    }
+
+    // Refresh Data from Native Bridge
+    function refreshData() {
+      if (isBusy) return;
+      isBusy = true;
+      const spin = document.getElementById('refreshSpinner');
+      if (spin) spin.style.display = 'inline-block';
+
+      try {
+        if (!window.LagKillerBridge) {
+          showToast('تنبيه: محرك الروت غير متصل');
+          isBusy = false;
+          return;
+        }
+
+        const raw = window.LagKillerBridge.getSystemStats();
+        const data = JSON.parse(raw);
+
+        // Update CPU UI
+        const cpuTotal = data.cpu.total;
+        document.getElementById('cpuVal').textContent = `${cpuTotal}%`;
+        document.getElementById('cpuSubtext').textContent = `sys: ${data.cpu.sys}%`;
+        const cpuBar = document.getElementById('cpuBar');
+        cpuBar.style.width = `${Math.min(100, cpuTotal)}%`;
+        cpuBar.style.background = cpuTotal > 40 ? 'var(--red)' : (cpuTotal > 15 ? 'var(--amber)' : 'var(--cyan)');
+
+        // Update RAM UI
+        const ramUsed = data.ram.usedMB;
+        const ramTotal = data.ram.totalMB;
+        const ramPercent = data.ram.percent;
+        document.getElementById('ramVal').textContent = `${ramPercent}% (${(ramUsed/1024).toFixed(1)} GB)`;
+        document.getElementById('ramFreeVal').textContent = `متاح ${data.ram.freeMB} MB`;
+        const ramBar = document.getElementById('ramBar');
+        ramBar.style.width = `${ramPercent}%`;
+        ramBar.style.background = ramPercent > 85 ? 'var(--red)' : (ramPercent > 70 ? 'var(--amber)' : 'var(--emerald)');
+
+        // Update Counts
+        allApps = data.apps || [];
+        updateCounts();
+
+        // Lag Banner
+        const lagBanner = document.getElementById('lagBanner');
+        if (data.lagMakersCount > 0) {
+          lagBanner.style.display = 'flex';
+          document.getElementById('lagBannerText').textContent = `تم رصد ${data.lagMakersCount} تطبيق يستهلك المعالج أو الذاكرة بشكل مفرط!`;
+        } else {
+          lagBanner.style.display = 'none';
+        }
+
+        renderApps();
+      } catch (e) {
+        console.error(e);
+      } finally {
+        isBusy = false;
+      }
+    }
+
+    function updateCounts() {
+      const lagCount = allApps.filter(a => a.isLagMaker).length;
+      const runningCount = allApps.filter(a => a.isRunning).length;
+      const frozenCount = allApps.filter(a => a.isDisabled || a.isSuspended).length;
+      const systemCount = allApps.filter(a => a.isSystem).length;
+
+      document.getElementById('countLag').textContent = lagCount;
+      document.getElementById('countRunning').textContent = runningCount;
+      document.getElementById('countFrozen').textContent = frozenCount;
+      document.getElementById('countSystem').textContent = systemCount;
+      document.getElementById('countAll').textContent = allApps.length;
+    }
+
+    function filterApps() {
+      return allApps.filter(app => {
+        // Tab Filter
+        let matchesTab = false;
+        if (currentTab === 'lag') matchesTab = app.isLagMaker;
+        else if (currentTab === 'running') matchesTab = app.isRunning;
+        else if (currentTab === 'frozen') matchesTab = app.isDisabled || app.isSuspended;
+        else if (currentTab === 'system') matchesTab = app.isSystem;
+        else if (currentTab === 'all') matchesTab = true;
+
+        if (!matchesTab) return false;
+
+        // Search Filter
+        if (searchQuery) {
+          const q = searchQuery.toLowerCase();
+          return app.name.toLowerCase().includes(q) || app.pkg.toLowerCase().includes(q);
+        }
+        return true;
+      }).sort((a, b) => {
+        // Sort highest CPU first, then RAM
+        if (b.cpu !== a.cpu) return b.cpu - a.cpu;
+        return b.ram - a.ram;
+      });
+    }
+
+    function renderApps() {
+      const listEl = document.getElementById('appsList');
+      const filtered = filterApps();
+
+      if (filtered.length === 0) {
+        listEl.innerHTML = `
+          <div style="text-align: center; color: var(--text-dim); padding: 40px;">
+            ${currentTab === 'lag' ? '✨ رائع! لا توجد تطبيقات تسبب بطء في المعالج حالياً' : 'لا توجد نتائج مطابقة'}
+          </div>
+        `;
+        return;
+      }
+
+      listEl.innerHTML = filtered.map(app => {
+        const isLag = app.isLagMaker;
+        const isSuspended = app.isSuspended;
+        const isDisabled = app.isDisabled;
+        const isProtected = app.isProtected;
+
+        let cpuBadgeClass = 'badge-cpu-normal';
+        if (app.cpu >= 15) cpuBadgeClass = 'badge-cpu-danger';
+        else if (app.cpu >= 5) cpuBadgeClass = 'badge-cpu-warn';
+
+        return `
+          <div class="app-card ${isLag ? 'lag-maker' : ''} ${isDisabled || isSuspended ? 'frozen' : ''}" data-pkg="${app.pkg}">
+            <div class="app-card-header">
+              <img class="app-icon" src="https://appassets.androidplatform.net/app-icon/${app.pkg}.png" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\\'http://www.w3.org/2000/svg\\' width=\\'40\\' height=\\'40\\'><rect width=\\'40\\' height=\\'40\\' rx=\\'8\\' fill=\\'%231A243D\\'/></svg>'" alt="">
+              <div class="app-info">
+                <div class="app-title-row">
+                  <span class="app-name">${escapeHtml(app.name)}</span>
+                  ${isProtected ? '<span class="tag-status tag-protected">محمي 🛡️</span>' : ''}
+                  ${app.isRunning ? '<span class="tag-status tag-running">يعمل</span>' : ''}
+                  ${isSuspended ? '<span class="tag-status tag-suspended">معلق ⏸️</span>' : ''}
+                  ${isDisabled ? '<span class="tag-status tag-frozen">مجمد ❄️</span>' : ''}
+                </div>
+                <div class="app-pkg">${app.pkg}</div>
+              </div>
+              <div class="app-badges">
+                ${app.cpu > 0 ? `<span class="badge ${cpuBadgeClass}">${app.cpu}% CPU</span>` : ''}
+                ${app.ram > 0 ? `<span class="badge badge-ram">${app.ram} MB</span>` : ''}
+              </div>
+            </div>
+
+            <div class="app-actions">
+              <!-- Force Stop Button -->
+              <button class="btn-action btn-stop" onclick="handleAction('stop', '${app.pkg}', '${escapeHtml(app.name)}', ${isProtected})">
+                ⚡ إيقاف
+              </button>
+
+              <!-- Suspend / Resume Button -->
+              ${isSuspended ? `
+                <button class="btn-action btn-resume" onclick="handleAction('unsuspend', '${app.pkg}', '${escapeHtml(app.name)}', ${isProtected})">
+                  ▶️ استئناف
+                </button>
+              ` : `
+                <button class="btn-action btn-suspend" onclick="handleAction('suspend', '${app.pkg}', '${escapeHtml(app.name)}', ${isProtected})">
+                  ⏸️ تعليق
+                </button>
+              `}
+
+              <!-- Freeze / Unfreeze Button -->
+              ${isDisabled ? `
+                <button class="btn-action btn-unfreeze" onclick="handleAction('unfreeze', '${app.pkg}', '${escapeHtml(app.name)}', ${isProtected})">
+                  🔥 إلغاء التجميد
+                </button>
+              ` : `
+                <button class="btn-action btn-freeze" onclick="handleAction('freeze', '${app.pkg}', '${escapeHtml(app.name)}', ${isProtected})">
+                  ❄️ تجميد
+                </button>
+              `}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function escapeHtml(str) {
+      return (str || '').replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[m]);
+    }
+
+    // App Control Actions
+    window.handleAction = function(type, pkg, name, isProtected) {
+      if (isProtected) {
+        alert(`تحذير: "${name}" هو تطبيق نظام أساسي محمي. لا ينصح بإيقافه لتجنب إعادة تشغيل واجهة النظام!`);
+        return;
+      }
+
+      if (!window.LagKillerBridge) return;
+
+      let resJson;
+      if (type === 'stop') {
+        resJson = window.LagKillerBridge.forceStop(pkg);
+        showToast(`تم إيقاف ${name} ⚡`);
+      } else if (type === 'suspend') {
+        resJson = window.LagKillerBridge.suspendApp(pkg);
+        showToast(`تم تعليق ${name} (Suspend) ⏸️`);
+      } else if (type === 'unsuspend') {
+        resJson = window.LagKillerBridge.unsuspendApp(pkg);
+        showToast(`تم استئناف ${name} ▶️`);
+      } else if (type === 'freeze') {
+        resJson = window.LagKillerBridge.freezeApp(pkg);
+        showToast(`تم تجميد ${name} (Disable) ❄️`);
+      } else if (type === 'unfreeze') {
+        resJson = window.LagKillerBridge.unfreezeApp(pkg);
+        showToast(`تم إلغاء تجميد ${name} 🔥`);
+      }
+
+      setTimeout(refreshData, 300);
+    };
+
+    // Quick Boost Button Action
+    document.getElementById('quickBoostBtn').addEventListener('click', () => {
+      if (!window.LagKillerBridge) return;
+      const res = window.LagKillerBridge.quickBoost();
+      const parsed = JSON.parse(res);
+      showToast(parsed.message || 'تم تنظيف الخلفية بنجاح ⚡');
+      setTimeout(refreshData, 500);
+    });
+
+    // Lag Kill All Action
+    document.getElementById('lagKillAllBtn').addEventListener('click', () => {
+      if (!window.LagKillerBridge) return;
+      const lagApps = allApps.filter(a => a.isLagMaker && !a.isProtected);
+      for (const app of lagApps) {
+        window.LagKillerBridge.forceStop(app.pkg);
+      }
+      showToast(`تم إيقاف ${lagApps.length} تطبيق مسبب للبطء فورا! ⚡`);
+      setTimeout(refreshData, 500);
+    });
+
+    // Tab buttons event listeners
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentTab = btn.getAttribute('data-tab');
+        renderApps();
+      });
+    });
+
+    // Search Input event listener
+    document.getElementById('searchInput').addEventListener('input', (e) => {
+      searchQuery = e.target.value.trim();
+      renderApps();
+    });
+
+    // Refresh Button
+    document.getElementById('refreshBtn').addEventListener('click', refreshData);
+
+    // Initial Load & Auto refresh
+    window.addEventListener('load', () => {
+      refreshData();
+      autoRefreshTimer = setInterval(refreshData, 3500);
+    });
+  </script>
+</body>
+</html>

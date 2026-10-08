@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="lag_bg">#050811</color>
+    <color name="lag_surface">#0B1224</color>
+    <color name="lag_accent">#00F0FF</color>
+    <color name="lag_danger">#FF3366</color>
+    <color name="lag_emerald">#00FF9D</color>
+    <color name="white">#FFFFFFFF</color>
+    <color name="black">#FF000000</color>
+</resources>
