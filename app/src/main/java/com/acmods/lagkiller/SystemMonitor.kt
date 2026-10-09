@@ -12,6 +12,8 @@ import java.io.File
 class SystemMonitor(private val context: Context) {
 
     private val packageManager: PackageManager = context.packageManager
+    private val cacheFile = File(context.filesDir, "apps_metadata_cache.json")
+    private val lastStatsFile = File(context.filesDir, "last_system_stats.json")
 
     private val CORE_PROTECTED_PACKAGES = mutableSetOf(
         "android",
@@ -51,12 +53,62 @@ class SystemMonitor(private val context: Context) {
         } catch (e: Exception) {
             // Ignore
         }
-        ensureAppCache()
+        loadDiskCache()
+    }
+
+    private fun loadDiskCache() {
+        if (cacheFile.exists()) {
+            try {
+                val text = cacheFile.readText()
+                val array = JSONArray(text)
+                cachedApps.clear()
+                for (i in 0 until array.length()) {
+                    val obj = array.getJSONObject(i)
+                    cachedApps.add(
+                        CachedAppMeta(
+                            obj.getString("pkg"),
+                            obj.getString("name"),
+                            obj.getBoolean("isSystem"),
+                            obj.getBoolean("isProtected")
+                        )
+                    )
+                }
+                isAppListCached = cachedApps.isNotEmpty()
+            } catch (e: Exception) {
+                isAppListCached = false
+            }
+        }
+    }
+
+    private fun saveDiskCache() {
+        try {
+            val array = JSONArray()
+            for (app in cachedApps) {
+                val obj = JSONObject().apply {
+                    put("pkg", app.pkg)
+                    put("name", app.name)
+                    put("isSystem", app.isSystem)
+                    put("isProtected", app.isProtected)
+                }
+                array.put(obj)
+            }
+            cacheFile.writeText(array.toString())
+        } catch (e: Exception) {
+            // Ignore
+        }
+    }
+
+    fun getLastSavedStats(): String {
+        return if (lastStatsFile.exists()) {
+            try { lastStatsFile.readText() } catch (e: Exception) { "{}" }
+        } else {
+            "{}"
+        }
     }
 
     @Synchronized
-    fun ensureAppCache() {
-        if (isAppListCached && cachedApps.isNotEmpty()) return
+    fun ensureAppCache(forceRefresh: Boolean = false) {
+        if (!forceRefresh && isAppListCached && cachedApps.isNotEmpty()) return
         try {
             val installed = packageManager.getInstalledApplications(0)
             cachedApps.clear()
@@ -72,6 +124,7 @@ class SystemMonitor(private val context: Context) {
                 cachedApps.add(CachedAppMeta(pkg, label, isSystem, isProtected))
             }
             isAppListCached = true
+            saveDiskCache()
         } catch (e: Exception) {
             // Fallback
         }
@@ -86,7 +139,7 @@ class SystemMonitor(private val context: Context) {
     fun getSystemStats(): String {
         val root = JSONObject()
 
-        // 1. RAM Info directly from /proc/meminfo (instant ~1ms)
+        // 1. RAM Info directly from /proc/meminfo (~1ms)
         var totalRamKB = 0L
         var availRamKB = 0L
         try {
@@ -117,7 +170,7 @@ class SystemMonitor(private val context: Context) {
         }
         root.put("ram", ramObj)
 
-        // 2. CPU and Process Parsing via single fast Root command
+        // 2. CPU and Process Parsing via single fast Root top command
         val runningAppsMap = mutableMapOf<String, AppProcData>()
         var totalCpuUsed = 0.0
         var totalCpuUser = 0.0
@@ -149,7 +202,7 @@ class SystemMonitor(private val context: Context) {
             }
         }
 
-        // Fast ps scan for accurate RAM calculation
+        // Fast ps scan for accurate RAM
         val psOutput = RootShell.exec("ps -A -o RSS,NAME")
         for (line in psOutput.lines()) {
             val trimmed = line.trim()
@@ -174,7 +227,7 @@ class SystemMonitor(private val context: Context) {
         }
         root.put("cpu", cpuObj)
 
-        // 3. Match with cached installed apps (Instant memory lookup)
+        // 3. Match with cached installed apps (Instant in-memory lookup)
         ensureAppCache()
         val appsArray = JSONArray()
 
@@ -198,7 +251,6 @@ class SystemMonitor(private val context: Context) {
             val isLagMaker = isRunning && !isProtected && (cpu >= 8.0 || ramMB >= 400)
             if (isLagMaker) lagMakersCount++
 
-            // Fast state check (only when needed)
             var isDisabled = false
             var isSuspended = false
             if (!isRunning) {
@@ -238,6 +290,10 @@ class SystemMonitor(private val context: Context) {
         root.put("frozenCount", frozenCount)
         root.put("apps", appsArray)
 
-        return root.toString()
+        val jsonStr = root.toString()
+        // Save snapshot to disk cache for instant frame-0 loading on next cold start
+        try { lastStatsFile.writeText(jsonStr) } catch (e: Exception) {}
+
+        return jsonStr
     }
 }

@@ -33,31 +33,30 @@ jobs:
       - name: Prepare APK for Release
         run: |
           mkdir -p release-output
-          cp app/build/outputs/apk/debug/app-debug.apk release-output/LagKiller-v1.1.0.apk
+          cp app/build/outputs/apk/debug/app-debug.apk release-output/LagKiller-v1.2.0.apk
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: LagKiller-v1.1.0-APK
-          path: release-output/LagKiller-v1.1.0.apk
+          name: LagKiller-v1.2.0-APK
+          path: release-output/LagKiller-v1.2.0.apk
           if-no-files-found: error
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/heads/main')
         with:
-          tag_name: v1.1.0
-          name: "LagKiller Root v1.1.0 - Ultra Fast & Smooth Edition"
+          tag_name: v1.2.0
+          name: "LagKiller Root v1.2.0 - Frame-0 Instant Cache Edition"
           body: |
-            ### ⚡ LagKiller Root v1.1.0: Ultra-Fast & Smooth Edition
+            ### ⚡ LagKiller Root v1.2.0: Frame-0 Instant Cache Edition
 
-            - **Performance & Smoothness Optimization:**
-              - Removed background auto-refresh loops completely (zero background battery/CPU consumption).
-              - Added dedicated manual Refresh button (تحديث الفحص).
-              - Instant 0ms optimistic UI action response on Force Stop, Suspend, and Freeze.
-              - In-memory application metadata caching for instantaneous search and filtering.
-              - Asynchronous background root process scanning on IO threads.
-              - One-Tap Quick Boost to force-stop background resource hogs and drop caches.
-          files: release-output/LagKiller-v1.1.0.apk
+            - **Intelligent Dual-Layer Caching Architecture:**
+              - Frame-0 instant hydration from local persistent storage (0ms startup latency).
+              - Never re-scans installed packages from scratch on open; apps are interactive immediately on frame 1.
+              - Disk-backed icon caching (PNGs cached locally on flash storage, avoiding repetitive APK resource decoding).
+              - Stale-While-Revalidate background silent scanning without layout shifting or screen flickering.
+              - 0ms optimistic UI action responses for Force Stop, Suspend, and Freeze.
+          files: release-output/LagKiller-v1.2.0.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

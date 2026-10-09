@@ -118,7 +118,7 @@
       color: var(--cyan);
       padding: 7px 14px;
       border-radius: 8px;
-      font-size: 12.5px;
+      font-size: 12px;
       font-weight: 700;
       cursor: pointer;
       display: inline-flex;
@@ -498,9 +498,7 @@
 
     <!-- Apps List Container -->
     <div class="apps-list" id="appsList">
-      <div style="text-align: center; color: var(--text-dim); padding: 40px;">
-        جاري الفحص المباشر... ⏳
-      </div>
+      <!-- Immediately populated from instant local cache on Frame 0 -->
     </div>
 
   </main>
@@ -524,7 +522,44 @@
       setTimeout(() => { toast.remove(); }, 2500);
     }
 
-    // Trigger Manual Scan
+    // Apply System Stats to UI (used for both instant cache hydration & live scans)
+    function applyStats(data, isInitialCache = false) {
+      if (!data) return;
+
+      // Update CPU UI
+      if (data.cpu) {
+        const cpuTotal = data.cpu.total || 0;
+        document.getElementById('cpuVal').textContent = `${cpuTotal}%`;
+        document.getElementById('cpuSubtext').textContent = `sys: ${data.cpu.sys || 0}%`;
+        const cpuBar = document.getElementById('cpuBar');
+        cpuBar.style.width = `${Math.min(100, cpuTotal)}%`;
+        cpuBar.style.background = cpuTotal > 40 ? 'var(--red)' : (cpuTotal > 15 ? 'var(--amber)' : 'var(--cyan)');
+      }
+
+      // Update RAM UI
+      if (data.ram) {
+        const ramUsed = data.ram.usedMB || 0;
+        const ramTotal = data.ram.totalMB || 0;
+        const ramPercent = data.ram.percent || 0;
+        document.getElementById('ramVal').textContent = `${ramPercent}% (${(ramUsed/1024).toFixed(1)} GB)`;
+        document.getElementById('ramFreeVal').textContent = `متاح ${data.ram.freeMB || 0} MB`;
+        const ramBar = document.getElementById('ramBar');
+        ramBar.style.width = `${ramPercent}%`;
+        ramBar.style.background = ramPercent > 85 ? 'var(--red)' : (ramPercent > 70 ? 'var(--amber)' : 'var(--emerald)');
+      }
+
+      // Update Apps Data
+      if (data.apps && Array.isArray(data.apps)) {
+        allApps = data.apps;
+        updateCounts();
+        renderApps();
+        if (!isInitialCache) {
+          try { localStorage.setItem('lk_cached_stats', JSON.stringify(data)); } catch (e) {}
+        }
+      }
+    }
+
+    // Trigger Manual Scan (Background, non-blocking)
     function triggerScan() {
       if (isScanning) return;
       isScanning = true;
@@ -548,7 +583,6 @@
         isScanning = false;
         btn.classList.remove('loading');
         icon.textContent = '🔄';
-        showToast('جهازك يعمل في وضع المعاينة');
       }
     }
 
@@ -560,30 +594,9 @@
       btn.classList.remove('loading');
       icon.textContent = '🔄';
 
-      if (!data) return;
-
-      // Update CPU UI
-      const cpuTotal = data.cpu.total;
-      document.getElementById('cpuVal').textContent = `${cpuTotal}%`;
-      document.getElementById('cpuSubtext').textContent = `sys: ${data.cpu.sys}%`;
-      const cpuBar = document.getElementById('cpuBar');
-      cpuBar.style.width = `${Math.min(100, cpuTotal)}%`;
-      cpuBar.style.background = cpuTotal > 40 ? 'var(--red)' : (cpuTotal > 15 ? 'var(--amber)' : 'var(--cyan)');
-
-      // Update RAM UI
-      const ramUsed = data.ram.usedMB;
-      const ramTotal = data.ram.totalMB;
-      const ramPercent = data.ram.percent;
-      document.getElementById('ramVal').textContent = `${ramPercent}% (${(ramUsed/1024).toFixed(1)} GB)`;
-      document.getElementById('ramFreeVal').textContent = `متاح ${data.ram.freeMB} MB`;
-      const ramBar = document.getElementById('ramBar');
-      ramBar.style.width = `${ramPercent}%`;
-      ramBar.style.background = ramPercent > 85 ? 'var(--red)' : (ramPercent > 70 ? 'var(--amber)' : 'var(--emerald)');
-
-      // Update Apps Data
-      allApps = data.apps || [];
-      updateCounts();
-      renderApps();
+      if (data) {
+        applyStats(data, false);
+      }
     };
 
     function updateCounts() {
@@ -714,7 +727,7 @@
       const tagFroz = document.getElementById(`tag_froz_${cardId}`);
       const badgeCpu = document.getElementById(`badge_cpu_${cardId}`);
 
-      // 1. Optimistic Immediate UI Feedback in 0ms:
+      // Optimistic Immediate UI Feedback in 0ms:
       if (type === 'stop') {
         window.LagKillerBridge.forceStop(pkg);
         if (btnStop) {
@@ -771,7 +784,7 @@
         showToast(`تم فك تجميد ${name} 🔥`);
       }
 
-      // Update in-memory state
+      // Update in-memory state & persist to local storage
       const appRef = allApps.find(a => a.pkg === pkg);
       if (appRef) {
         if (type === 'stop') { appRef.isRunning = false; appRef.cpu = 0; }
@@ -780,6 +793,7 @@
         else if (type === 'freeze') { appRef.isDisabled = true; appRef.isRunning = false; }
         else if (type === 'unfreeze') { appRef.isDisabled = false; }
         updateCounts();
+        try { localStorage.setItem('lk_cached_stats', JSON.stringify({ apps: allApps })); } catch (e) {}
       }
     };
 
@@ -792,7 +806,7 @@
         const parsed = JSON.parse(res);
         showToast(parsed.message || 'تم تنظيف الخلفية بنجاح ⚡');
         triggerScan();
-      }, 100);
+      }, 80);
     });
 
     // Tab buttons
@@ -814,10 +828,33 @@
     // Manual Refresh Button Listener
     document.getElementById('refreshBtn').addEventListener('click', triggerScan);
 
-    // Initial Load ONCE (No interval timers!)
-    window.addEventListener('load', () => {
-      triggerScan();
-    });
+    // =========================================================================
+    // FRAME-0 INSTANT HYDRATION (The Secret of Fast Apps)
+    // =========================================================================
+    (function initInstantCache() {
+      // 1. Try Client localStorage Cache (0ms instant)
+      try {
+        const localData = localStorage.getItem('lk_cached_stats');
+        if (localData) {
+          applyStats(JSON.parse(localData), true);
+        }
+      } catch (e) {}
+
+      // 2. Try Disk Snapshot from Android Bridge (0.5ms)
+      if (allApps.length === 0 && window.LagKillerBridge && window.LagKillerBridge.getInstantCachedStats) {
+        try {
+          const raw = window.LagKillerBridge.getInstantCachedStats();
+          if (raw && raw !== '{}') {
+            applyStats(JSON.parse(raw), true);
+          }
+        } catch (e) {}
+      }
+
+      // 3. Silent background revalidation (updates numbers without interrupting user)
+      window.addEventListener('load', () => {
+        setTimeout(triggerScan, 50);
+      });
+    })();
   </script>
 </body>
 </html>

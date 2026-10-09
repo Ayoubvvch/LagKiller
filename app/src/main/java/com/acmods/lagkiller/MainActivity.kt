@@ -23,6 +23,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
+import java.io.File
 
 class MainActivity : AppCompatActivity() {
 
@@ -31,7 +32,9 @@ class MainActivity : AppCompatActivity() {
     private lateinit var controller: AppActionController
     private var lastBackPressTime = 0L
 
-    private val iconCache = object : LruCache<String, ByteArray>(120) {}
+    // In-memory RAM cache for active icons
+    private val iconCache = object : LruCache<String, ByteArray>(150) {}
+    private lateinit var iconDiskDir: File
 
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -45,6 +48,7 @@ class MainActivity : AppCompatActivity() {
             isAppearanceLightNavigationBars = false
         }
 
+        iconDiskDir = File(cacheDir, "app_icons").apply { if (!exists()) mkdirs() }
         monitor = SystemMonitor(this)
         controller = AppActionController(this)
 
@@ -156,14 +160,29 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun getAppIconBytes(packageName: String): ByteArray? {
+        // 1. RAM LruCache check (<0.1ms)
         iconCache.get(packageName)?.let { return it }
 
+        // 2. Persistent Disk Cache check (~1ms, avoids heavy APK asset extraction)
+        val diskFile = File(iconDiskDir, "$packageName.png")
+        if (diskFile.exists()) {
+            try {
+                val bytes = diskFile.readBytes()
+                iconCache.put(packageName, bytes)
+                return bytes
+            } catch (e: Exception) {
+                // Ignore and re-extract
+            }
+        }
+
+        // 3. Extract once from PackageManager and save to disk
         return try {
             val drawable = packageManager.getApplicationIcon(packageName)
             val bitmap = drawableToBitmap(drawable)
             val stream = ByteArrayOutputStream()
             bitmap.compress(Bitmap.CompressFormat.PNG, 85, stream)
             val bytes = stream.toByteArray()
+            try { diskFile.writeBytes(bytes) } catch (e: Exception) {}
             iconCache.put(packageName, bytes)
             bytes
         } catch (e: Exception) {
@@ -205,6 +224,11 @@ class MainActivity : AppCompatActivity() {
         private val monitor: SystemMonitor,
         private val controller: AppActionController
     ) {
+
+        @JavascriptInterface
+        fun getInstantCachedStats(): String {
+            return monitor.getLastSavedStats()
+        }
 
         @JavascriptInterface
         fun requestScanAsync() {
